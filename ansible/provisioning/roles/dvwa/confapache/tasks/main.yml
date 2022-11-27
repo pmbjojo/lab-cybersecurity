@@ -1,0 +1,79 @@
+---
+# tasks file for confapache
+- name: Create DVWA user
+  ansible.builtin.user:
+    name: "{{ dvwa_user }}"
+    groups: www-data
+- name: Clone dvwa
+  ansible.builtin.git:
+    repo: "{{ dvwa_sources }}"
+    dest: "{{ dvwa_directory }}"
+    version: master
+
+- name: Change dvwa files owner
+  ansible.builtin.file:
+    path: "{{ dvwa_directory }}"
+    owner: "{{ dvwa_user }}"
+    group: "www-data"
+    state: directory
+    recurse: true
+
+- name: Create dvwa config
+  ansible.builtin.copy:
+    remote_src: true
+    src: "{{ dvwa_directory }}/config/config.inc.php.dist"
+    dest: "{{ dvwa_directory }}/config/config.inc.php"
+    mode: '0755'
+
+- name: Change dvwa database name configuration
+  ansible.builtin.replace:
+    path: "{{ dvwa_directory }}/config/config.inc.php"
+    regexp: "dvwa"
+    replace: "{{ dvwa_db_name }}"
+    after: "db_database"
+    before: "db_user"
+
+- name: Change dvwa database user configuration
+  ansible.builtin.replace:
+    path: "{{ dvwa_directory }}/config/config.inc.php"
+    regexp: "dvwa"
+    replace: "{{ dvwa_db_user }}"
+    after: "db_user"
+    before: "db_password"
+
+- name: Change dvwa database password configuration
+  ansible.builtin.replace:
+    path: "{{ dvwa_directory }}/config/config.inc.php"
+    regexp: "p@ssw0rd"
+    replace: "{{ dvwa_db_password }}"
+    after: "db_password"
+    before: "db_port"
+
+- name: Enable php module
+  ansible.builtin.replace:
+    path: "/etc/php/7.4/apache2/php.ini"
+    regexp: "allow_url_include = Off"
+    replace: "allow_url_include = On"
+
+- name: Create dvwa virtualhost
+  ansible.builtin.copy:
+    remote_src: true
+    src: /etc/apache2/sites-available/000-default.conf
+    dest: /etc/apache2/sites-available/{{ dvwa_name }}.conf
+    mode: '0755'
+
+- name: Configure dvwa virtualhost
+  ansible.builtin.replace:
+    path: /etc/apache2/sites-available/dvwa.conf
+    regexp: "DocumentRoot /var/www/html"
+    replace: "DocumentRoot {{ dvwa_directory }}"
+
+- name: Disable default site
+  ansible.builtin.command: a2dissite 000-default
+  notify: Restart apache2 sercice
+  changed_when: false
+
+- name: Enable dvwa site
+  ansible.builtin.command: a2ensite {{ dvwa_name }}
+  notify: Restart Apache
+  changed_when: false

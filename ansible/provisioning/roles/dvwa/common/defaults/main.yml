@@ -1,0 +1,8 @@
+---
+dvwa_db_name: "dvwadb"
+dvwa_db_user: "dvwauser"
+dvwa_db_password: "dvwapassword"
+dvwa_name: "dvwa"
+dvwa_directory: "/var/www/html/{{ dvwa_name }}"
+dvwa_sources: "https://github.com/digininja/DVWA.git"
+dvwa_user: "dvwa"

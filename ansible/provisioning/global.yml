@@ -1,0 +1,6 @@
+---
+- name: "Install global configuration"
+  hosts: global
+  become: true
+  roles:
+    - role: "global"

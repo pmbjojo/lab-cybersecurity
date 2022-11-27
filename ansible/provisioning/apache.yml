@@ -1,0 +1,7 @@
+---
+- name: "Install Apache"
+  hosts: apache
+  become: true
+  roles:
+    - role: "apache"
+      php_install: true

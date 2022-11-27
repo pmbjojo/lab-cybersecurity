@@ -1,0 +1,15 @@
+---
+- name: "Create DVWA database"
+  community.mysql.mysql_db:
+    name: "{{ dvwa_db_name }}"
+    login_unix_socket: "/var/run/mysqld/mysqld.sock"
+    state: present
+
+- name: "Create DVWA user"
+  community.mysql.mysql_user:
+    name: "{{ dvwa_db_user }}"
+    login_unix_socket: "/var/run/mysqld/mysqld.sock"
+    host: "localhost"
+    password: "{{ dvwa_db_password }}"
+    priv: "{{ dvwa_db_name }}.*:ALL"
+    state: present

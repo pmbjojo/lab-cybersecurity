@@ -1,0 +1,123 @@
+---
+- name: Configure victim vm
+  hosts: victim
+  become: true
+  vars:
+    - dvwa_db_database: dvwadatabase
+    - dvwa_db_user: dvwauser
+    - dvwa_db_password: dvwapassword
+  tasks:
+    - name: Install packages
+      ansible.builtin.apt:
+        name:
+          - apache2
+          - php
+          - libapache2-mod-php
+          - php-mysql
+          - php-intl
+          - php-curl
+          - php-xmlrpc
+          - php-soap
+          - php-gd
+          - php-json
+          - php-cli
+          - php-pear
+          - php-xsl
+          - php-zip
+          - php-mbstring
+          - mariadb-server
+          - mariadb-client
+        state: present
+
+    - name: Start apache2
+      ansible.builtin.service:
+        name: apache2
+        enabled: true
+        state: started
+
+    - name: Clone dvwa
+      ansible.builtin.git:
+        repo: 'https://github.com/digininja/DVWA.git'
+        dest: /var/www/html/dvwa
+        version: master
+
+    - name: Copy dvwa config
+      ansible.builtin.copy:
+        remote_src: true
+        src: "/var/www/html/dvwa/config/config.inc.php.dist"
+        dest: "/var/www/html/dvwa/config/config.inc.php"
+        mode: '0755'
+
+    - name: Enable php module
+      ansible.builtin.replace:
+        path: /etc/php/*/apache2/php.ini
+        regexp: 'allow_url_include = off'
+        replace: 'allow_url_include = on'
+
+    - name: Change dvwa database configuration
+      ansible.builtin.replace:
+        path: /var/www/html/dvwa/config/config.inc.php
+        regexp: "$_DVWA[ 'db_database' ] = 'dvwa';"
+        replace: "$_DVWA[ 'db_database' ] = '{{ dvwa_db_database }}'"
+
+    - name: Change dvwa user configuration
+      ansible.builtin.replace:
+        path: /var/www/html/dvwa/config/config.inc.php
+        regexp: "$_DVWA[ 'db_user' ] = 'dvwa';"
+        replace: "$_DVWA[ 'db_user' ] = '{{ dvwa_db_user }}'"
+
+    - name: Change dvwa password configuration
+      ansible.builtin.replace:
+        path: /var/www/html/dvwa/config/config.inc.php
+        regexp: "$_DVWA[ 'db_password' ] = 'p@ssw0rd';"
+        replace: "$_DVWA[ 'db_password' ] = '{{ dvwa_db_password }}'"
+
+    - name: Change dvwa files owner
+      ansible.builtin.file:
+        path: /var/www/html/dvwa/
+        owner: www-data
+        group: www-data
+        state: directory
+        recurse: true
+
+    - name: Create dvwa virtualhost
+      ansible.builtin.copy:
+        remote_src: true
+        src: /etc/apache2/sites-available/000-default.conf
+        dest: /etc/apache2/sites-available/dvwa.conf
+        mode: '0755'
+
+    - name: Configure dvwa virtualhost
+      ansible.builtin.replace:
+        path: /etc/apache2/sites-available/dvwa.conf
+        regexp: "DocumentRoot /var/www/html"
+        replace: "DocumentRoot /var/www/html/dvwa"
+
+    - name: Disable default site
+      ansible.builtin.command: a2dissite 000-default
+      notify: Restart apache2 sercice
+      changed_when: false
+
+    - name: Enable dvwa site
+      ansible.builtin.command: a2ensite dvwa
+      notify: Restart apache2 sercice
+      changed_when: false
+
+    - name: Create dvwa database and user
+      ansible.builtin.shell: |
+        mysql -e "CREATE DATABASE {{ dvwa_db_name }}"
+        mysql -e "grant all privileges on {{ dvwa_db_name }}.* to '{{ dvwa_db_user_name }}'@'localhost' identified by '{{ dvwa_db_user_password }}'"
+      changed_when: false
+
+    - name: Push index.html template
+      ansible.builtin.template:
+        src: "/home/pmbjojo/Documents/Eseo/Introduction aux infrastructures/Vagrant Ansible/files/index.html.j2"
+        dest: /var/www/html/index.html
+        mode: '0644'
+
+  handlers:
+    - name: Restart apache2 sercice
+      ansible.builtin.service:
+        name: apache2
+        enabled: true
+        state: restarted

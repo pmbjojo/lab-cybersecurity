@@ -13,10 +13,10 @@
 - name: Change dvwa files owner
   ansible.builtin.file:
     path: "{{ dvwa_directory }}"
-    owner: "{{ dvwa_user }}"
-    group: "www-data"
     state: directory
     recurse: true
+    owner: "www-data"
+    group: "www-data"
 
 - name: Create dvwa config
   ansible.builtin.copy:
@@ -62,11 +62,23 @@
     dest: /etc/apache2/sites-available/{{ dvwa_name }}.conf
     mode: '0755'
 
-- name: Configure dvwa virtualhost
+- name: Configure dvwa DocumentRoot
   ansible.builtin.replace:
     path: /etc/apache2/sites-available/dvwa.conf
     regexp: "DocumentRoot /var/www/html"
     replace: "DocumentRoot {{ dvwa_directory }}"
+
+- name: Configure dvwa error log
+  ansible.builtin.replace:
+    path: /etc/apache2/sites-available/dvwa.conf
+    regexp: "error.log"
+    replace: "{{ dvwa_error_log_file }}"
+
+- name: Configure dvwa access log
+  ansible.builtin.replace:
+    path: /etc/apache2/sites-available/dvwa.conf
+    regexp: "access.log"
+    replace: "{{ dvwa_access_log_file }}"
 
 - name: Disable default site
   ansible.builtin.command: a2dissite 000-default

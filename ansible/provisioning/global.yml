@@ -3,4 +3,4 @@
   hosts: global
   become: true
   roles:
-    - role: "global"
+    - "global"

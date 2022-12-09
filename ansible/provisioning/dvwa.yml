@@ -1,18 +1,6 @@
-- name: "DVWA MariaDB configuration"
+---
+- name: "DVWA install"
   hosts: dvwa
   become: true
-  tags:
-    - mariadb
-    - mysql
   roles:
-    - mariadb
-    - dvwa/confdb
-
-- name: "DVWA Apache configuration"
-  hosts: dvwa
-  become: true
-  tags: apache
-  roles:
-    - role: "apache"
-      php_install: true
-    - role: "dvwa/confapache"
+    - "dvwa"

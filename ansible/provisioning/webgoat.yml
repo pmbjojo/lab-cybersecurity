@@ -1,0 +1,6 @@
+---
+- name: "Install webgoat"
+  hosts: webgoat
+  become: true
+  roles:
+    - "webgoat"

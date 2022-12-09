@@ -1,0 +1,6 @@
+---
+- name: "Install victim services"
+  hosts: victim
+  become: true
+  roles:
+    - victim

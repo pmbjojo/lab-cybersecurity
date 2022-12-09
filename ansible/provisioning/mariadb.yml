@@ -3,4 +3,4 @@
   hosts: mariadb
   become: true
   roles:
-    - role: mariadb
+    - mariadb

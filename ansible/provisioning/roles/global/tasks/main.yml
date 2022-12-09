@@ -6,8 +6,6 @@
       - wget
       - gnupg
       - unzip
-      - telnetd
-      - vsftpd
     state: present
     update_cache: true
 

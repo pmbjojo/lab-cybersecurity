@@ -1,9 +1,9 @@
 ---
-# tasks file for confapache
 - name: Create DVWA user
   ansible.builtin.user:
     name: "{{ dvwa_user }}"
     groups: www-data
+
 - name: Clone dvwa
   ansible.builtin.git:
     repo: "{{ dvwa_sources }}"

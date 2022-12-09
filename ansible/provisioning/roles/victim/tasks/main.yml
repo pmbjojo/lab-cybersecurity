@@ -1,0 +1,7 @@
+---
+- name: "Install ftp and telnet"
+  ansible.builtin.apt:
+    name: 
+      - telnetd
+      - vsftpd
+    state: "present"
